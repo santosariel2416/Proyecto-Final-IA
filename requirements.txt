@@ -1,0 +1,13 @@
+# Jesus Ariel Santos 
+# 24-EISN-2-034 
+
+ultralytics
+opencv-python
+gradio
+requests
+numpy
+torch
+torchvision
+pillow
+matplotlib
+scipy 
