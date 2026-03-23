@@ -176,4 +176,5 @@ cython_debug/
 # Modelos de IA
 yolov8n.pt
 
+#Archivo de prueba 
 scripts/test_telegram.py 
