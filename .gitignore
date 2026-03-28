@@ -204,3 +204,10 @@ dataset1.csv
 
 # Carpetas específicas
 Sistema de Vigilancia*
+
+__pycache__/
+*.pyc
+
+venv/
+
+*.pt
