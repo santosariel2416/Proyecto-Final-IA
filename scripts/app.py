@@ -13,24 +13,36 @@ zona = (100, 100, 400, 400) # Zona restringida
 
 ultimo_envio = 0 # Control de alertas
 ejecutando = False # Controla si el video está activo
+contador_frames = 0 # Control de frames para optimización
 
 def iniciar_video():
-    global ejecutando, ultimo_envio # Permite modificar estas variables globales dentro de la función
+    global ejecutando, ultimo_envio, contador_frames # Permite modificar estas variables globales dentro de la función
     ejecutando = True # Indica que el sistema está activo 
 
     cap1 = cv2.VideoCapture(0, cv2.CAP_DSHOW) # Abre la cámara de la laptop (índice 0) 
     cap2 = cv2.VideoCapture(1, cv2.CAP_DSHOW) # Abre la cámara del celular (índice 1)
 
     while ejecutando: # Mientras el sistema esté activo, sigue ejecutándose
+        contador_frames += 1
+        procesar_ia = contador_frames % 2 == 0
+
         ret1, frame1 = cap1.read() # Captura un frame (imagen) de la cámara 1
         ret2, frame2 = cap2.read() # Captura un frame de la cámara 2
 
         if not ret1 or not ret2: # Si alguna cámara falla
             continue # Se salta este ciclo y vuelve a intentar
-        
+
+        # Reducción de resolución para mejorar rendimiento
+        frame1 = cv2.resize(frame1, (640, 480))
+        frame2 = cv2.resize(frame2, (640, 480))
+
+        intruso_detectado = False
 
         #  CAMARA 1 
-        resultados1 = model(frame1) # La IA analiza la imagen de la cámara 1
+        if procesar_ia:
+            resultados1 = model(frame1) # La IA analiza la imagen de la cámara 1
+        else:
+            resultados1 = []
 
         cv2.rectangle(frame1, (zona[0], zona[1]), (zona[2], zona[3]), (0, 0, 255), 2) # Dibuja la zona restringida en color rojo
 
@@ -46,10 +58,9 @@ def iniciar_video():
 
                     if zona[0] < cx < zona[2] and zona[1] < cy < zona[3]:  # Verifica si la persona está dentro de la zona restringida
                         color = (255, 0, 0) # Rojo = intruso
-
+                        intruso_detectado = True
 
                         tiempo_actual = time.time() # Obtiene el tiempo actual
-
 
                         if tiempo_actual - ultimo_envio > 5: # Verifica si han pasado más de 5 segundos desde la última alerta
                             enviar_alerta() # Envía mensaje a Telegram
@@ -61,7 +72,10 @@ def iniciar_video():
                     cv2.circle(frame1, (cx, cy), 5, color, -1) # Dibuja un punto en el centro de la persona
 
         #  CAMARA 2 
-        resultados2 = model(frame2) # La IA analiza la imagen de la cámara 2
+        if procesar_ia:
+            resultados2 = model(frame2) # La IA analiza la imagen de la cámara 2
+        else:
+            resultados2 = []
 
         cv2.rectangle(frame2, (zona[0], zona[1]), (zona[2], zona[3]), (0, 0, 255), 2) # Dibuja la zona restringida en la segunda cámara
 
@@ -77,6 +91,7 @@ def iniciar_video():
 
                     if zona[0] < cx < zona[2] and zona[1] < cy < zona[3]:
                         color = (255, 0, 0)
+                        intruso_detectado = True
 
                         tiempo_actual = time.time()
 
@@ -94,7 +109,6 @@ def iniciar_video():
         frame2 = cv2.resize(frame2, (400, 300)) # Reduce tamaño de la cámara 2
 
         combinado = cv2.hconcat([frame1, frame2]) # Une las dos cámaras lado a lado
-
 
         frame = cv2.cvtColor(combinado, cv2.COLOR_BGR2RGB) # Convierte colores para que Gradio lo muestre correctamente
 
@@ -129,4 +143,4 @@ with gr.Blocks(
     btn_iniciar.click(fn=iniciar_video, outputs=imagen) # un clic para iniciar 
     btn_detener.click(fn=detener_video, outputs=imagen) # un clic para detener 
 
-interfaz.launch() # Ejecuta la aplicacion 
+interfaz.launch() # Ejecuta la aplicacion
