@@ -19,6 +19,9 @@ zona = (100, 100, 400, 400)
 # Variable para controlar el tiempo entre alertas
 ultimo_envio = 0
 
+contador_frames = 0 # Variable para reducir el procesamiento de frames
+COOLDOWN = 60 # Tiempo de espera entre alertas
+
 # Verificar si la cámara abrió correctamente 
 if not cap.isOpened():
     print("Error: No se pudo acceder a la cámara") #Valido que la cámara esté funcionando antes de continuar.
@@ -31,8 +34,13 @@ while True: #Uso un bucle infinito para procesar continuamente los frames del vi
         print("Error al capturar el frame") #Muestra error y detiene el programa
         break
 
+    contador_frames += 1
+
+    if contador_frames % 3 != 0:
+        continue
+
     # Ejecutar detección
-    resultados = model(frame)  
+    resultados = model(frame, imgsz=640, conf=0.5)  
 
     # Dibujar la zona restringida
     cv2.rectangle(frame, (zona[0], zona[1]), (zona[2], zona[3]), (255, 0, 0), 2)
@@ -46,6 +54,12 @@ while True: #Uso un bucle infinito para procesar continuamente los frames del vi
             if clase == 0:
                 x1, y1, x2, y2 = map(int, box.xyxy[0])
 
+                ancho = x2 - x1
+                alto = y2 - y1
+
+                if ancho < 50 or alto < 50:
+                    continue
+
                 # Calculo el centro de la persona
                 cx = (x1 + x2) // 2
                 cy = (y1 + y2) // 2
@@ -57,7 +71,7 @@ while True: #Uso un bucle infinito para procesar continuamente los frames del vi
                     tiempo_actual = time.time()
 
                     # Evito enviar muchas alertas seguidas
-                    if tiempo_actual - ultimo_envio > 5:
+                    if tiempo_actual - ultimo_envio > COOLDOWN:
                         enviar_alerta()
                         ultimo_envio = tiempo_actual
 

@@ -178,3 +178,29 @@ yolov8n.pt
 
 #Archivo de prueba 
 scripts/test_telegram.py 
+
+# Archivos generados por Gradio
+.gradio/flagged
+
+Sistema de Vigilancia en Tiempo Real 
+# Archivos de datos
+*.csv
+
+# Imágenes temporales
+*.png
+*.jpg
+*.jpeg
+*.webp
+
+# Gradio archivos temporales
+.gradio/
+flagged/
+
+# Archivos generados automáticamente
+*.webp
+
+# Dataset de pruebas
+dataset1.csv
+
+# Carpetas específicas
+Sistema de Vigilancia*
